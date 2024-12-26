@@ -207,41 +207,43 @@ public final class MecanumDrive {
     }
 
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
-        this.pose = pose;
+            this.pose = pose;
 
-        LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
+            LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
-        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
+            for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+                module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+            }
 
-        // TODO: make sure your config has motors with these names (or change them)
-        //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-        leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-        rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+            // TODO: make sure your config has motors with these names (or change them)
+            //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
+            leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+            leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+            rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+            rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
-        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+             leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // TODO: reverse motor directions if needed
-        //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
-        //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        lazyImu = new LazyImu(hardwareMap, "imu", new RevHubOrientationOnRobot(
-                PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
 
-        voltageSensor = hardwareMap.voltageSensor.iterator().next();
+            // TODO: reverse motor directions if needed
+            //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
+            // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
+            //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
+            lazyImu = new LazyImu(hardwareMap, "imu", new RevHubOrientationOnRobot(
+                    PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
 
-        FlightRecorder.write("MECANUM_PARAMS", PARAMS);
+            voltageSensor = hardwareMap.voltageSensor.iterator().next();
+
+            localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
+
+            FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
