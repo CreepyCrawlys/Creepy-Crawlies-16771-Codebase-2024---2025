@@ -2,17 +2,17 @@ package org.firstinspires.ftc.teamcode.DriverCode;
 
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.Tunig.ArmPIDController;
 import org.firstinspires.ftc.teamcode.Tunig.armPIDConfig;
 
 @TeleOp
@@ -26,8 +26,16 @@ public class Driver extends OpMode {
     public DcMotorEx armMotor1;
     public DcMotorEx armMotor2;
     public PIDController armPID_Controller;
+    private ElapsedTime runtime;
+
+    public ServoEx grabberRight;
+    public ServoEx grabberLeft;
     public final double TICKSINDEGREES = 1344 / 180.0;
 
+
+    private double gp1_left_bump_last_press;
+    private double gp2_left_bump_last_press;
+   // private double gp2_right_bump_last_press;
 
     double motorSpeed;
 
@@ -51,7 +59,12 @@ public class Driver extends OpMode {
         armMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        runtime = new ElapsedTime();
 
+        gp1_left_bump_last_press = 0;
+
+        gp2_left_bump_last_press = 0;
+        //gp2_right_bump_last_press = 0;
     }
 
     public void initPID_Controllers(){
@@ -63,39 +76,36 @@ public class Driver extends OpMode {
 
 
     public void baseRobotController(){
-        fR.setPower(gamepad1.right_stick_y - gamepad1.right_stick_x);  // Example: using right stick Y-axis for forward/reverse
-        bR.setPower(gamepad1.right_stick_y + gamepad1.right_stick_x);  // Example: using right stick Y-axis for forward/reverse
-        fL.setPower(gamepad1.left_stick_y - gamepad1.left_stick_x);   // Example: using left stick Y-axis for forward/reverse
-        bL.setPower(gamepad1.left_stick_y + gamepad1.left_stick_x);
+        fR.setPower(gamepad1.right_stick_y + -gamepad1.right_stick_x);  // Example: using right stick Y-axis for forward/reverse
+        bR.setPower(gamepad1.right_stick_y - -gamepad1.right_stick_x);  // Example: using right stick Y-axis for forward/reverse
+        fL.setPower(gamepad1.left_stick_y  + -gamepad1.left_stick_x);   // Example: using left stick Y-axis for forward/reverse
+        bL.setPower(gamepad1.left_stick_y  - -gamepad1.left_stick_x);
 
     }
-    private void armController(double targetPos) {
+   private void armController(double targetPos) {
 
         if(gamepad2.right_stick_y < -0.5 ) armPIDConfig.TARGET -= 1;
 
         if(gamepad2.right_stick_y > 0.5 ) armPIDConfig.TARGET += 1;
-
-        if(armPIDConfig.TARGET >= -47) armPIDConfig.TARGET = -47;
-        if( armPIDConfig.TARGET <= -577) armPIDConfig.TARGET = -577; //-47 -577
+//
+//        if(armPIDConfig.TARGET >= -47) armPIDConfig.TARGET = -47;
+//        if( armPIDConfig.TARGET <= -577) armPIDConfig.TARGET = -577; //-47 -577
 
         //++++++++++++++a+rmPIDConfig.target = (int) mapFloatToAngle(gamepad2.right_stick_y);
 
         armPID_Controller.setPID(armPIDConfig.P, armPIDConfig.I, armPIDConfig.D);
 
         int armPos = armMotor1.getCurrentPosition();
-        int armPos2 = fL.getCurrentPosition();
+        int armPos1 = fL.getCurrentPosition();
 
-        double pid = armPID_Controller.calculate(armPos2, armPIDConfig.TARGET);
-//        double ff = Math.cos(Math.toRadians(armPIDConfig.target / TICKSINDEGREES)) * armPIDConfig.f;
+        double pid = armPID_Controller.calculate(armPos1, armPIDConfig.TARGET);
+        double ff = Math.cos(Math.toRadians(armPIDConfig.TARGET / TICKSINDEGREES)) * armPIDConfig.f;
 
-        double power1 = pid;
-        double power2 = pid;
-
-        armMotor1.setPower(power1);
-        armMotor2.setPower(power2);
+       armMotor1.setPower(pid + ff);
+        armMotor2.setPower(pid + ff);
 
         telemetry.addData("PID Value", pid);
-        telemetry.addData("Pos2", armPos2);
+        telemetry.addData("Pos2", armPos1);
         telemetry.addData("Target", armPIDConfig.TARGET);
 
         telemetry.update();
@@ -105,6 +115,22 @@ public class Driver extends OpMode {
         double angle = (floatValue + 1) * 180;
         angle = (angle + 180) % 360;
         return angle;
+    }
+
+    public void grabberController(){
+        if(gamepad2.left_bumper){
+            double nowTime = runtime.seconds();
+            if ((gp2_left_bump_last_press + 0.3) < nowTime) {
+                gp2_left_bump_last_press = nowTime;
+                if (grabberRight.getPosition()==0){
+                    grabberRight.setPosition(0.3);  //open
+                    grabberLeft.setPosition(0.3);
+                }else {
+                    grabberRight.setPosition(0);    //close
+                    grabberLeft.setPosition(0);
+                }
+            }
+        }
     }
 
     @Override
@@ -119,7 +145,6 @@ public class Driver extends OpMode {
         baseRobotController();
         armController(mapFloatToAngle(gamepad2.right_stick_y));
     }
+
+
 }
-
-
-

@@ -32,7 +32,7 @@ public abstract class PID_Core extends LinearOpMode {
 
 
     public void PID_Core_Fetch(HardwareMap hardwareMap, String frontLeftName, String frontRightName,
-                    String backLeftName, String backRightName) {
+                               String backLeftName, String backRightName) {
 
         // Map motors
         fL = hardwareMap.get(DcMotor.class, frontLeftName);
@@ -61,9 +61,7 @@ public abstract class PID_Core extends LinearOpMode {
         )));
 
         // Initialize variables
-        robotPosX = 0;
-        robotPosY = 0;
-        robotOrientationTheta = 0;
+        robotOrientation = imu.getRobotYawPitchRollAngles();
 
         waitForStart();
     }
@@ -85,7 +83,6 @@ public abstract class PID_Core extends LinearOpMode {
         resetMotorEncoders();
         while (opModeIsActive() && isDriving) {
             telemetry.update();
-            robotOrientation = imu.getRobotYawPitchRollAngles();
             currentYaw = robotOrientation.getYaw(AngleUnit.DEGREES);
 
             // Steering logic to keep robot driving straight
@@ -121,30 +118,6 @@ public abstract class PID_Core extends LinearOpMode {
         lastFrontLeftEncoder = fL.getCurrentPosition();
         lastFrontRightEncoder = fR.getCurrentPosition();
     }
-
-    // Update robot's position based on deadwheel encoders
-    public void updateOdometry() {
-        // Constants for the deadwheels
-        double wheelDiameterInches = 2.0;  // in inches
-        double ticksPerRevolution = 1120;   // Adjust this to your encoder's ticks per revolution
-        double distancePerTick = Math.PI * wheelDiameterInches / ticksPerRevolution;
-
-        // Calculate changes in X, Y, and Theta
-        double deltaX = (deadwheelLeft.getCurrentPosition() - lastBackLeftEncoder) * distancePerTick;
-        double deltaY = (deadwheelFront.getCurrentPosition() - lastBackRightEncoder) * distancePerTick;
-        double deltaTheta = (deadwheelRight.getCurrentPosition() - lastFrontLeftEncoder) * distancePerTick;
-
-        // Update the robot's position
-        robotPosX += deltaX;
-        robotPosY += deltaY;
-        robotOrientationTheta += deltaTheta;
-
-        // Update encoders for the next calculation
-        lastBackLeftEncoder = deadwheelLeft.getCurrentPosition();
-        lastBackRightEncoder = deadwheelFront.getCurrentPosition();
-        lastFrontLeftEncoder = deadwheelRight.getCurrentPosition();
-    }
-
     // Apply steering correction to drive motors
     public void applySteering(double steeringAdjustment, double power) {
         bL.setPower(-power - steeringAdjustment);
@@ -163,7 +136,7 @@ public abstract class PID_Core extends LinearOpMode {
 
     // Turn the robot to a target angle
     public void turnToAngle(int targetAngle, double power) {
-        robotOrientation = imu.getRobotYawPitchRollAngles();
+
         currentYaw = robotOrientation.getYaw(AngleUnit.DEGREES);
         boolean turnRight = targetAngle > currentYaw;
 
