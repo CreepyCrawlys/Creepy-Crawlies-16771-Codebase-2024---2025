@@ -29,6 +29,7 @@
      /* Declare OpMode members. */
      private DcMotor armLifter1;
      private DcMotor armLifter2;
+     private  DcMotor pullyMotor;
      private DcMotor backLeft;
      private DcMotor backRight;
      private DcMotor frontLeft;
@@ -47,6 +48,7 @@
      private double gp2_left_bump_last_press;
      private double gp2_right_bump_last_press;
 
+     private boolean canHang = false;
      boolean finaleMovement = false;
 
 
@@ -62,6 +64,7 @@
          grabberLeft = hardwareMap.get(Servo.class, "leftArmGraber");
          grabberRight = hardwareMap.get(Servo.class, "rightArmGraber");
          rotate = hardwareMap.get(Servo.class, "graberS");
+         pullyMotor = hardwareMap.get(DcMotor.class, "pully");
 
          runtime = new ElapsedTime();
 
@@ -92,8 +95,9 @@
 
         finaleMovement = false;
 
-       armLift();//Tank Drive
+        armLift();//Tank Drive
         grabberControl();
+        pullyControll();
 
             frontLeftPower = leftY + leftX;
             frontRightPower = rightY - rightX;
@@ -169,6 +173,16 @@
          armLifter2.setPower(-currentPos);
 
          lastPos = currentPos;
+     }
+
+     public void pullyControll(){
+         if(gamepad1.dpad_down && gamepad2.dpad_down){
+             canHang = true;
+         }
+         if(canHang){
+             if(gamepad2.triangle) pullyMotor.setPower(1);
+             if(gamepad2.x) pullyMotor.setPower(-1);
+         }
      }
 
 }
